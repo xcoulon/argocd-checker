@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/codeready-toolchain/argocd-checker/internal/validation"
+	"github.com/codeready-toolchain/argocd-checker/pkg/validation"
 
 	charmlog "github.com/charmbracelet/log"
 	"github.com/spf13/afero"

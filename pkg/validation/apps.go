@@ -5,21 +5,13 @@ import (
 	iofs "io/fs"
 	"path/filepath"
 
-	argocd "github.com/argoproj/argo-cd/v2/pkg/apis/application/v1alpha1"
 	"github.com/spf13/afero"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
 
 // Look for all YAML files in the given paths and when the contents if an Argo CD Application or ApplicationSet,
 // verify that the `spec.source.path` matches an existing component
 func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...string) error {
-	s := runtime.NewScheme()
-	if err := argocd.AddToScheme(s); err != nil {
-		return err
-	}
-
-	decoder := serializer.NewCodecFactory(s).UniversalDeserializer()
 
 	for _, path := range apps {
 		p := filepath.Join(baseDir, path)
@@ -53,15 +45,25 @@ func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...s
 			}
 			if filepath.Ext(info.Name()) == ".yaml" {
 				logger.Debug("checking contents", "path", path)
-				if obj, _, err := decoder.Decode(data, nil, nil); err == nil {
-					switch obj := obj.(type) {
-					case *argocd.Application:
-						return checkPath(logger, afs, baseDir, obj.Spec.Source.Path)
-					case *argocd.ApplicationSet:
-						return checkPath(logger, afs, baseDir, obj.Spec.Template.Spec.Source.Path)
-					default:
-						// logger.Debug("ignoring %s (%T)", path, obj)
+				obj, err := yaml.Parse(string(data))
+				if err != nil {
+					return err
+				}
+				switch {
+				case obj.GetKind() == "Application":
+					path, err := obj.GetString("spec.source.path")
+					if err != nil {
+						return err
 					}
+					return checkPath(logger, afs, baseDir, path)
+				case obj.GetKind() == "ApplicationSet":
+					path, err := obj.GetString("spec.template.spec.source.path")
+					if err != nil {
+						return err
+					}
+					return checkPath(logger, afs, baseDir, path)
+				default:
+					// logger.Debug("ignoring %s (%T)", path, obj)
 				}
 			}
 			return nil

@@ -31,7 +31,7 @@ help:/
 
 .PHONY: test
 ## run all tests excluding fixtures and vendored packages
-test: 
+test:
 	@go test ./... -v --failfast
 
 # --------------------------------------
@@ -63,6 +63,6 @@ endif
 
 .PHONY: install
 ## build the binary and copy into $(GOPATH)/bin
-install: 
+install:
 	@go build -o $(BINARY_PATH) main.go
 	@cp $(BINARY_PATH) $(GOPATH)/bin 

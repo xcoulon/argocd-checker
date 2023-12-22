@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	charmlog "github.com/charmbracelet/log"
-	"github.com/codeready-toolchain/argocd-checker/internal/validation"
+	"github.com/codeready-toolchain/argocd-checker/pkg/validation"
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -187,7 +187,7 @@ spec:
   replicas: 2
 `)
 			require.NoError(t, err)
-			
+
 			// when
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 

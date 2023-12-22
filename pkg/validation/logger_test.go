@@ -5,7 +5,7 @@ import (
 	"io"
 
 	charmlog "github.com/charmbracelet/log"
-	"github.com/codeready-toolchain/argocd-checker/internal/validation"
+	"github.com/codeready-toolchain/argocd-checker/pkg/validation"
 	"github.com/sanity-io/litter"
 )
 
