@@ -56,7 +56,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 			err = validation.CheckApplications(logger, afs, "/path/to", "apps")
 
 			// then
-			require.NoError(t, err)
+			require.Error(t, err, "kustomization.yaml is empty")
 			assert.Empty(t, logger.Errors())
 			assert.Empty(t, logger.Warnings())
 		})

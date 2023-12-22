@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/afero"
-	kbuild "sigs.k8s.io/kustomize/kustomize/v4/commands/build"
+	kbuild "sigs.k8s.io/kustomize/kustomize/v5/commands/build"
 	kfsys "sigs.k8s.io/kustomize/kyaml/filesys"
 )
 

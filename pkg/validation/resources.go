@@ -70,7 +70,7 @@ entries:
 				}
 			}
 		}
-		for _, m := range kobj.PatchesStrategicMerge {
+		for _, m := range kobj.PatchesStrategicMerge { //nolint:staticcheck
 			if string(m) == e.Name() {
 				continue entries
 			}

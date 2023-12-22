@@ -53,7 +53,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 
 			// then
-			require.NoError(t, err)
+			require.Error(t, err, "kustomization.yaml is empty")
 			assert.Empty(t, logger.Errors())
 			assert.Empty(t, logger.Warnings())
 		})
@@ -226,7 +226,7 @@ data:
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 
 			// then
-			require.NoError(t, err)
+			require.Error(t, err, "kustomization.yaml is empty")
 			assert.Empty(t, logger.Errors())
 			assert.Contains(t, logger.Warnings(), LogRecord{
 				Msg: "resource is not referenced",
