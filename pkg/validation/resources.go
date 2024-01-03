@@ -75,6 +75,16 @@ entries:
 				continue entries
 			}
 		}
+		for _, m := range kobj.Patches {
+			if string(m.Path) == e.Name() {
+				continue entries
+			}
+		}
+		for _, m := range kobj.Transformers {
+			if string(m) == e.Name() {
+				continue entries
+			}
+		}
 		logger.Warn("resource is not referenced", "path", e.Name())
 	}
 	return nil

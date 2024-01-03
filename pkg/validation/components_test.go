@@ -196,6 +196,99 @@ spec:
 			assert.Empty(t, logger.Errors())
 			assert.Empty(t, logger.Warnings())
 		})
+
+		t.Run("component with patches", func(t *testing.T) {
+			// given
+			logger := NewTestLogger(os.Stdout, charmlog.Options{
+				Level: charmlog.InfoLevel,
+			})
+			afs := afero.Afero{
+				Fs: afero.NewMemMapFs(),
+			}
+			err := afs.Mkdir("/path/to/components", os.ModeDir)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+
+resources:
+- deployment.yaml
+
+patches:
+  - path: patch.yaml`)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/deployment.yaml", `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: test
+  name: test
+spec:
+  replicas: 1
+`)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/patch.yaml", `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: test
+  name: test
+spec:
+  replicas: 2
+`)
+			require.NoError(t, err)
+
+			// when
+			err = validation.CheckComponents(logger, afs, "/path/to", "components")
+
+			// then
+			require.NoError(t, err)
+			assert.Empty(t, logger.Errors())
+			assert.Empty(t, logger.Warnings())
+		})
+
+		t.Run("component with transformers", func(t *testing.T) {
+			// given
+			logger := NewTestLogger(os.Stdout, charmlog.Options{
+				Level: charmlog.InfoLevel,
+			})
+			afs := afero.Afero{
+				Fs: afero.NewMemMapFs(),
+			}
+			err := afs.Mkdir("/path/to/components", os.ModeDir)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+
+resources:
+- deployment.yaml
+
+transformers:
+  - namespace.yaml`)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/deployment.yaml", `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: test
+  name: test
+spec:
+  replicas: 1
+`)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/namespace.yaml", `apiVersion: builtin
+kind: NamespaceTransformer
+metadata:
+  name: set-namespace
+  namespace: foo
+setRoleBindingSubjects: defaultOnly
+`)
+			require.NoError(t, err)
+
+			// when
+			err = validation.CheckComponents(logger, afs, "/path/to", "components")
+
+			// then
+			require.NoError(t, err)
+			assert.Empty(t, logger.Errors())
+			assert.Empty(t, logger.Warnings())
+		})
 	})
 
 	t.Run("warning", func(t *testing.T) {
