@@ -85,7 +85,7 @@ entries:
 				continue entries
 			}
 		}
-		logger.Warn("resource is not referenced", "path", e.Name())
+		logger.Warn("resource is not referenced", "path", path, "resource", e.Name())
 	}
 	return nil
 }

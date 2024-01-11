@@ -325,6 +325,8 @@ data:
 				Msg: "resource is not referenced",
 				KeyVals: []interface{}{
 					"path",
+					"/path/to/components/kustomization.yaml",
+					"resource",
 					"configmap.yaml",
 				},
 			})
