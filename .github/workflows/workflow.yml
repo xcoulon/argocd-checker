@@ -1,0 +1,61 @@
+name: ci-build
+on:
+  push:
+    branches:
+      - master
+    tags-ignore:
+      - '*.*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    name: Test on ${{ matrix.os }}
+
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20.x
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles ('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Test
+      run: |
+        make test
+
+  golangci:
+    name: GolangCI Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.20.x
+        
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Lint
+      uses: golangci/golangci-lint-action@v3
+      with:
+        version: v1.55.2
+        skip-go-installation: true # we already installed Go with `actions/setup-go@v2` above
+        skip-pkg-cache: true
+        skip-build-cache: true
+        args: --config=./.golangci.yml --verbose
