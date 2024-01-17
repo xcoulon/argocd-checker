@@ -5,6 +5,8 @@ import (
 	iofs "io/fs"
 	"path/filepath"
 
+	argocdv1alpha1 "github.com/codeready-toolchain/argocd-checker/pkg/argocd-types/application/v1alpha1"
+
 	"github.com/spf13/afero"
 	"sigs.k8s.io/kustomize/kyaml/yaml"
 )
@@ -45,25 +47,13 @@ func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...s
 			}
 			if filepath.Ext(info.Name()) == ".yaml" {
 				logger.Debug("checking contents", "path", path)
-				obj, err := yaml.Parse(string(data))
-				if err != nil {
-					return err
+				app := &argocdv1alpha1.Application{}
+				if err := yaml.Unmarshal(data, app); err != nil {
+					return checkPath(logger, afs, baseDir, app.Spec.Source.Path)
 				}
-				switch {
-				case obj.GetKind() == "Application":
-					path, err := obj.GetString("spec.source.path")
-					if err != nil {
-						return err
-					}
-					return checkPath(logger, afs, baseDir, path)
-				case obj.GetKind() == "ApplicationSet":
-					path, err := obj.GetString("spec.template.spec.source.path")
-					if err != nil {
-						return err
-					}
-					return checkPath(logger, afs, baseDir, path)
-				default:
-					// logger.Debug("ignoring %s (%T)", path, obj)
+				appSet := &argocdv1alpha1.ApplicationSet{}
+				if err := yaml.Unmarshal(data, appSet); err != nil {
+					return checkPath(logger, afs, baseDir, appSet.Spec.Template.Spec.Source.Path)
 				}
 			}
 			return nil
