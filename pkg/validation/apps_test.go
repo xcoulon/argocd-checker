@@ -61,7 +61,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 			assert.Empty(t, logger.Warnings())
 		})
 
-		t.Run("kustomization with resources", func(t *testing.T) {
+		t.Run("kustomization with valid apps", func(t *testing.T) {
 			// given
 			logger := NewTestLogger(os.Stdout, charmlog.Options{
 				Level: charmlog.InfoLevel,
@@ -76,24 +76,39 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 			err = addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
-- configmap-1.yaml
-- configmap-2.yaml`)
+- app-cookie.yaml
+- appset-pasta.yaml`)
 			require.NoError(t, err)
-			err = addFile(afs, "/path/to/apps/configmap-1.yaml", `apiVersion: v1
-kind: ConfigMap
+			err = addFile(afs, "/path/to/apps/app-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  namespace: test
-  name: cm-1
-data:
-  cookie: yummy`)
+  name: app-cookie
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: components/cookie`)
 			require.NoError(t, err)
-			err = addFile(afs, "/path/to/apps/configmap-2.yaml", `apiVersion: v1
-kind: ConfigMap
+			err = addFile(afs, "/path/to/components/cookie/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1`)
+			require.NoError(t, err)
+
+			err = addFile(afs, "/path/to/apps/appset-pasta.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
 metadata:
-  namespace: test
-  name: cm-2
-data:
-  pasta: yummy`)
+  name: appset-pasta
+spec:
+  template:
+    spec:
+      destination:
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        path: components/pasta`)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/pasta/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1`)
 			require.NoError(t, err)
 
 			// when
@@ -105,44 +120,178 @@ data:
 			assert.Empty(t, logger.Warnings())
 		})
 
-		t.Run("kustomization with overlays", func(t *testing.T) {
-			// given
-			logger := NewTestLogger(os.Stdout, charmlog.Options{
-				Level: charmlog.InfoLevel,
+		t.Run("kustomization with invalid app", func(t *testing.T) {
+			t.Run("unknown source path", func(t *testing.T) {
+
+				// given
+				logger := NewTestLogger(os.Stdout, charmlog.Options{
+					Level: charmlog.InfoLevel,
+				})
+
+				afs := afero.Afero{
+					Fs: afero.NewMemMapFs(),
+				}
+
+				err := afs.MkdirAll("/path/to/apps", 0755)
+				require.NoError(t, err)
+				err = addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- app-cookie.yaml`)
+				require.NoError(t, err)
+
+				err = addFile(afs, "/path/to/apps/app-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-cookie
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: components/cookie # path does not exist/does not contain a 'kustomization.yaml' file`)
+				require.NoError(t, err)
+
+				// when
+				err = validation.CheckApplications(logger, afs, "/path/to", "apps")
+
+				// then
+				require.EqualError(t, err, "components/cookie is not valid")
+				assert.Empty(t, logger.Errors())
+				assert.Empty(t, logger.Warnings())
 			})
 
-			afs := afero.Afero{
-				Fs: afero.NewMemMapFs(),
-			}
+			t.Run("missing component kustomization.yaml", func(t *testing.T) {
 
-			err := afs.MkdirAll("/path/to/apps", 0755)
-			require.NoError(t, err)
-			err = addFile(afs, "/path/to/apps/dev/kustomization.yaml", `kind: Kustomization
+				// given
+				logger := NewTestLogger(os.Stdout, charmlog.Options{
+					Level: charmlog.InfoLevel,
+				})
+
+				afs := afero.Afero{
+					Fs: afero.NewMemMapFs(),
+				}
+
+				err := afs.MkdirAll("/path/to/apps", 0755)
+				require.NoError(t, err)
+				err = addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
-- ../base`)
-			require.NoError(t, err)
-			err = addFile(afs, "/path/to/apps/base/kustomization.yaml", `kind: Kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
-resources:
-- configmap-1.yaml`)
-			require.NoError(t, err)
-			err = addFile(afs, "/path/to/apps/base/configmap-1.yaml", `apiVersion: v1
-kind: ConfigMap
+- app-cookie.yaml`)
+				require.NoError(t, err)
+
+				err = addFile(afs, "/path/to/apps/app-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: Application
 metadata:
-  namespace: test
-  name: cm-1
-data:
-  cookie: yummy`)
-			require.NoError(t, err)
+  name: app-cookie
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: components/cookie # path does not exist/does not contain a 'kustomization.yaml' file`)
+				require.NoError(t, err)
+				// empty dir
+				err = addDir(afs, "/path/to/components/cookie")
+				require.NoError(t, err)
 
-			// when
-			err = validation.CheckApplications(logger, afs, "/path/to", "apps")
+				// when
+				err = validation.CheckApplications(logger, afs, "/path/to", "apps")
 
-			// then
-			require.NoError(t, err)
-			assert.Empty(t, logger.Errors())
-			assert.Empty(t, logger.Warnings())
+				// then
+				require.EqualError(t, err, "components/cookie does not contain a 'kustomization.yaml' file")
+				assert.Empty(t, logger.Errors())
+				assert.Empty(t, logger.Warnings())
+			})
+		})
+
+		t.Run("kustomization with invalid appset", func(t *testing.T) {
+			t.Run("unknown source path", func(t *testing.T) {
+
+				// given
+				logger := NewTestLogger(os.Stdout, charmlog.Options{
+					Level: charmlog.InfoLevel,
+				})
+
+				afs := afero.Afero{
+					Fs: afero.NewMemMapFs(),
+				}
+
+				err := afs.MkdirAll("/path/to/apps", 0755)
+				require.NoError(t, err)
+				err = addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- appset-cookie.yaml`)
+				require.NoError(t, err)
+
+				err = addFile(afs, "/path/to/apps/appset-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: app-cookie
+spec:
+  template:
+    spec:
+      destination:
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        path: components/cookie # path does not exist/does not contain a 'kustomization.yaml' file`)
+				require.NoError(t, err)
+
+				// when
+				err = validation.CheckApplications(logger, afs, "/path/to", "apps")
+
+				// then
+				require.EqualError(t, err, "components/cookie is not valid")
+				assert.Empty(t, logger.Errors())
+				assert.Empty(t, logger.Warnings())
+			})
+
+			t.Run("missing component kustomization.yaml", func(t *testing.T) {
+
+				// given
+				logger := NewTestLogger(os.Stdout, charmlog.Options{
+					Level: charmlog.InfoLevel,
+				})
+
+				afs := afero.Afero{
+					Fs: afero.NewMemMapFs(),
+				}
+
+				err := afs.MkdirAll("/path/to/apps", 0755)
+				require.NoError(t, err)
+				err = addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- appset-cookie.yaml`)
+				require.NoError(t, err)
+
+				err = addFile(afs, "/path/to/apps/appset-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: appset-cookie
+spec:
+  template:
+    spec:
+      destination:
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        path: components/cookie # path does not exist/does not contain a 'kustomization.yaml' file`)
+				require.NoError(t, err)
+				// empty dir
+				err = addDir(afs, "/path/to/components/cookie")
+				require.NoError(t, err)
+
+				// when
+				err = validation.CheckApplications(logger, afs, "/path/to", "apps")
+
+				// then
+				require.EqualError(t, err, "components/cookie does not contain a 'kustomization.yaml' file")
+				assert.Empty(t, logger.Errors())
+				assert.Empty(t, logger.Warnings())
+			})
 		})
 	})
 
@@ -150,4 +299,8 @@ data:
 
 func addFile(afs afero.Afero, path string, data string) error {
 	return afs.WriteFile(path, []byte(data), 0755)
+}
+
+func addDir(afs afero.Afero, path string) error {
+	return afs.Mkdir(path, 0755)
 }

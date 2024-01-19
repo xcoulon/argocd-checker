@@ -48,12 +48,12 @@ func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...s
 			if filepath.Ext(info.Name()) == ".yaml" {
 				logger.Debug("checking contents", "path", path)
 				app := &argocdv1alpha1.Application{}
-				if err := yaml.Unmarshal(data, app); err != nil {
-					return checkPath(logger, afs, baseDir, app.Spec.Source.Path)
+				if err := yaml.Unmarshal(data, app); err == nil && app.Spec.Source != nil {
+					return checkPath(afs, baseDir, app.Spec.Source.Path)
 				}
 				appSet := &argocdv1alpha1.ApplicationSet{}
-				if err := yaml.Unmarshal(data, appSet); err != nil {
-					return checkPath(logger, afs, baseDir, appSet.Spec.Template.Spec.Source.Path)
+				if err := yaml.Unmarshal(data, appSet); err == nil && appSet.Spec.Template.Spec.Source != nil {
+					return checkPath(afs, baseDir, appSet.Spec.Template.Spec.Source.Path)
 				}
 			}
 			return nil
@@ -64,11 +64,15 @@ func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...s
 	return nil
 }
 
-func checkPath(_ Logger, afs afero.Afero, repoURL, path string) error {
+func checkPath(afs afero.Afero, repoURL, path string) error {
 	p := filepath.Join(repoURL, path)
 	if _, err := afs.ReadDir(p); err != nil {
 		return fmt.Errorf("%s is not valid", path)
 	}
-	// logger.Debugf("%s is valid", path)
+	// also, check that the path contains a `kustomization.yaml` file
+	if exists, err := afs.Exists(filepath.Join(p, "kustomization.yaml")); err != nil || !exists {
+		return fmt.Errorf("%s does not contain a 'kustomization.yaml' file", path)
+	}
+
 	return nil
 }
