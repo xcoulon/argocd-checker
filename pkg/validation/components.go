@@ -30,12 +30,12 @@ func CheckComponents(logger Logger, afs afero.Afero, baseDir string, components 
 			// look for a Kustomization file in the directory
 			if kp, found := lookupKustomizationFile(logger, afs, path); found {
 				if err := checkKustomizeResources(logger, afs, kp); err != nil {
-					return err
+					logger.Error("invalid resources", "path", path, "err", err)
 				}
 				if d.Name() != "base" {
 					logger.Debug("checking Kustomization build ", "path", path)
 					if err := checkBuild(logger, fsys, path); err != nil {
-						return err
+						logger.Error("invalid resources", "path", path, "err", err)
 					}
 				}
 			}
