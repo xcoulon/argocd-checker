@@ -54,7 +54,6 @@ var checkCmd = &cobra.Command{
 			logger.Error(strings.ReplaceAll(err.Error(), ": ", ":\n"))
 			os.Exit(1)
 		}
-		logger.Info("🤙 all good!")
 	},
 }
 

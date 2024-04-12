@@ -9,7 +9,6 @@ $ check-argocd --base-dir=$(pwd) --apps=apps-of-apps,apps --components=component
 INFO 👀 checking Applications and ApplicationSets path=/path/to/apps-of-apps
 INFO 👀 checking Applications and ApplicationSets path=/path/to/apps
 INFO 👀 checking Components path=/path/to/components
-INFO 🤙 all good!
 ```
 
 ## Building
