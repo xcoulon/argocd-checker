@@ -1,9 +1,7 @@
-/*
-Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -31,20 +29,18 @@ var verbose bool
 var checkCmd = &cobra.Command{
 	Use:   "check-argocd",
 	Short: "Checks the Argo CD configuration",
+	Args:  cobra.ExactArgs(0),
 
-	Run: func(cmd *cobra.Command, args []string) {
-
+	Run: func(cmd *cobra.Command, _ []string) {
 		logger := charmlog.New(cmd.OutOrStderr())
 		logger.SetLevel(charmlog.InfoLevel)
 		if verbose {
 			logger.SetLevel(charmlog.DebugLevel)
 		}
-
 		logger.Info("🏁 Checking Argo CD configuration", "base-dir", baseDir)
 		afs := afero.Afero{
 			Fs: afero.NewOsFs(),
 		}
-
 		// verifies that the source path of the Applications and ApplicationSets exists
 		if err := validation.CheckApplications(logger, afs, baseDir, apps...); err != nil {
 			logger.Error(strings.ReplaceAll(err.Error(), ": ", ":\n"))
@@ -60,13 +56,13 @@ var checkCmd = &cobra.Command{
 
 func init() {
 	checkCmd.Flags().StringSliceVar(&apps, "apps", []string{}, "path(s) to the applications (comma-separated, relative to '--baseDir')")
-	// if err := checkCmd.MarkFlagRequired("apps"); err != nil {
-	// 	panic(fmt.Sprintf("failed to mark flag as required: %s", err))
-	// }
+	if err := checkCmd.MarkFlagRequired("apps"); err != nil {
+		panic(fmt.Sprintf("failed to mark flag as required: %s", err))
+	}
 	checkCmd.Flags().StringVar(&baseDir, "base-dir", ".", "base directory of the repository")
 	checkCmd.Flags().StringSliceVar(&components, "components", []string{}, "path(s) to the components (comma-separated, relative to '--baseDir')")
-	// if err := checkCmd.MarkFlagRequired("components"); err != nil {
-	// 	panic(fmt.Sprintf("failed to mark flag as required: %s", err))
-	// }
+	if err := checkCmd.MarkFlagRequired("components"); err != nil {
+		panic(fmt.Sprintf("failed to mark flag as required: %s", err))
+	}
 	checkCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 }

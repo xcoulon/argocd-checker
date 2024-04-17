@@ -19,11 +19,7 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
-    - --base-dir
-    - ${{ inputs.base-dir }}
-    - --apps
-    - ${{ inputs.apps }}
-    - --components
-    - ${{ inputs.components }}
-    - --verbose
-    - ${{ inputs.verbose }}
+    - --base-dir=${{ inputs.base-dir }}
+    - --apps=${{ inputs.apps }}
+    - --components=${{ inputs.components }}
+    - --verbose=${{ inputs.verbose }}
