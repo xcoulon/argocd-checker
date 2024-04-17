@@ -40,6 +40,7 @@ var checkCmd = &cobra.Command{
 			logger.SetLevel(charmlog.DebugLevel)
 		}
 
+		logger.Info("🏁 Checking Argo CD configuration", "base-dir", baseDir)
 		afs := afero.Afero{
 			Fs: afero.NewOsFs(),
 		}

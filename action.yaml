@@ -1,0 +1,29 @@
+name: 'Check Argo CD components'
+description: 'Check the Application/ApplicationSets and their associated conponent manifests'
+inputs:
+  base-dir:
+    description: 'base directory of the repository'
+    required: false
+    default:  /github/workspace # the mount directory when the action is executed in a Docker container
+  apps:
+    description: 'path to the applications (comma-separated, relative to --baseDir)'
+    required: true
+  components:
+    description: 'path to the components (comma-separated, relative to --baseDir)'
+    required: true
+  verbose:
+    description: 'verbose output'
+    required: false
+    default: "false"
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - --base-dir
+    - ${{ inputs.base-dir }}
+    - --apps
+    - ${{ inputs.apps }}
+    - --components
+    - ${{ inputs.components }}
+    - --verbose
+    - ${{ inputs.verbose }}
