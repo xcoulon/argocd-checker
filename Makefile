@@ -53,16 +53,7 @@ install-golangci-lint:
 # Installing
 # --------------------------------------
 
-CUR_DIR=$(shell pwd)
-
-ifeq ($(OS),Windows_NT)
-BINARY_PATH=$(CUR_DIR)/bin/check-argocd.exe
-else
-BINARY_PATH=$(CUR_DIR)/bin/check-argocd
-endif
-
 .PHONY: install
 ## build the binary and copy into $(GOPATH)/bin
 install:
-	@go build -o $(BINARY_PATH) main.go
-	@cp $(BINARY_PATH) $(GOPATH)/bin 
+	go install github.com/codeready-toolchain/argocd-checker@master
