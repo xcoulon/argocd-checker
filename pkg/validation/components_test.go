@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -54,16 +53,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 
 			// then
-			require.NoError(t, err)
-			assert.Equal(t, []LogRecord{
-				{
-					Msg: "invalid resources",
-					KeyVals: []any{
-						"path", "/path/to/components",
-						"err", fmt.Errorf("kustomization.yaml is empty"),
-					},
-				},
-			}, logger.Errors())
+			require.Error(t, err, "invalid resources at /path/to/components: kustomization.yaml is empty")
+			assert.Empty(t, logger.Errors())
 			assert.Empty(t, logger.Warnings())
 		})
 
@@ -328,16 +319,8 @@ data:
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 
 			// then
-			require.NoError(t, err)
-			assert.Equal(t, []LogRecord{
-				{
-					Msg: "invalid resources",
-					KeyVals: []any{
-						"path", "/path/to/components",
-						"err", fmt.Errorf("kustomization.yaml is empty"),
-					},
-				},
-			}, logger.Errors())
+			require.Error(t, err, "invalid resources at /path/to/components: kustomization.yaml is empty")
+			assert.Empty(t, logger.Errors())
 			assert.Contains(t, logger.Warnings(), LogRecord{
 				Msg: "resource is not referenced",
 				KeyVals: []interface{}{

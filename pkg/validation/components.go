@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
 
@@ -30,12 +31,12 @@ func CheckComponents(logger Logger, afs afero.Afero, baseDir string, components 
 			// look for a Kustomization file in the directory
 			if kp, found := lookupKustomizationFile(logger, afs, path); found {
 				if err := checkKustomizeResources(logger, afs, kp); err != nil {
-					logger.Error("invalid resources", "path", path, "err", err)
+					return fmt.Errorf("invalid resources at %s: %w", path, err)
 				}
 				if d.Name() != "base" {
 					logger.Debug("checking Kustomization build ", "path", path)
 					if err := checkBuild(logger, fsys, path); err != nil {
-						logger.Error("invalid resources", "path", path, "err", err)
+						return fmt.Errorf("invalid resources at %s: %w", path, err)
 					}
 				}
 			}
