@@ -6,7 +6,7 @@ require (
 	github.com/charmbracelet/log v0.2.5
 	github.com/sanity-io/litter v1.5.5
 	github.com/spf13/afero v1.6.0
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/stretchr/testify v1.8.4
 	k8s.io/apimachinery v0.25.0
 	sigs.k8s.io/kustomize/api v0.15.0

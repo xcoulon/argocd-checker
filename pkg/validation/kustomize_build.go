@@ -2,7 +2,6 @@ package validation
 
 import (
 	"bytes"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/spf13/afero"
@@ -21,7 +20,7 @@ func lookupKustomizationFile(logger Logger, afs afero.Afero, basedir string) (st
 	return "", false
 }
 
-// verifies that `kustomize build` completes successfully
+// Verifies that `kustomize build` completes successfully
 func checkBuild(logger Logger, fsys kfsys.FileSystem, path string) error {
 	logger.Debug("👀 checking kustomize build", "path", path)
 	buffy := new(bytes.Buffer)
@@ -30,7 +29,5 @@ func checkBuild(logger Logger, fsys kfsys.FileSystem, path string) error {
 	if err := kcmd.RunE(kcmd, []string{path}); err != nil {
 		return err
 	}
-
-	exec.Command("kustomize", "build")
 	return nil
 }

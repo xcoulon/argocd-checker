@@ -8,9 +8,9 @@ import (
 	"sigs.k8s.io/kustomize/api/types"
 )
 
-// compares the entries of `resources` in the Kustomize file with the contents in the current directory to see if
-// any local file is missing (not referenced as a resource). Files starting with an underscore character (`_`) are
-// ingored
+// Compares the entries of `resources` in the Kustomize file with the contents in the current directory to see if
+// any local file is missing (not referenced as a resource).
+// Files starting with an underscore character (`_`) are ignored
 func checkKustomizeResources(logger Logger, afs afero.Afero, path string) error {
 	logger.Debug("checking kustomization resource", "path", path)
 	data, err := afs.ReadFile(path)
