@@ -28,4 +28,4 @@ COPY --from=builder /usr/src/app/check-argocd /usr/local/bin/
 # Run as non-root user
 USER 1001
 
-ENTRYPOINT ["/usr/local/bin/check-argocd"]
+ENTRYPOINT ["/usr/local/bin/check-argocd", "check"]

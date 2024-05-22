@@ -12,14 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := NewCheckCmd().Execute(); err != nil {
-		os.Exit(1)
-	}
-}
-
 // checkCmd represents the base command when called without any subcommands
 func NewCheckCmd() *cobra.Command {
 
@@ -28,7 +20,7 @@ func NewCheckCmd() *cobra.Command {
 	var verbose bool
 
 	checkCmd := &cobra.Command{
-		Use:   "argocd-checker --base-dir=$(pwd) --apps apps-of-apps,apps --components components --verbose=false",
+		Use:   "check --base-dir=$(pwd) --apps apps-of-apps,apps --components components --verbose=false",
 		Short: "Checks the Argo CD configuration",
 		Args:  cobra.ExactArgs(0),
 
