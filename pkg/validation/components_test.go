@@ -304,13 +304,24 @@ setRoleBindingSubjects: defaultOnly
 			err := afs.Mkdir("/path/to/components", os.ModeDir)
 			require.NoError(t, err)
 			err = addFile(afs, "/path/to/components/kustomization.yaml", `kind: Kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1`)
+apiVersion: kustomize.config.k8s.io/v1beta1
+
+resources:
+  - configmap1.yaml`)
 			require.NoError(t, err)
-			err = addFile(afs, "/path/to/components/configmap.yaml", `apiVersion: v1
+			err = addFile(afs, "/path/to/components/configmap1.yaml", `apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: test
-  name: secret
+  name: config1
+data:
+  cookie: yummy`)
+			require.NoError(t, err)
+			err = addFile(afs, "/path/to/components/configmap2.yaml", `apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: test
+  name: config2
 data:
   cookie: yummy`)
 			require.NoError(t, err)
@@ -319,17 +330,9 @@ data:
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 
 			// then
-			require.Error(t, err, "invalid resources at /path/to/components: kustomization.yaml is empty")
+			require.Error(t, err, "resource is not referenced: /path/to/components/configmap2.yaml")
 			assert.Empty(t, logger.Errors())
-			assert.Contains(t, logger.Warnings(), LogRecord{
-				Msg: "resource is not referenced",
-				KeyVals: []interface{}{
-					"path",
-					"/path/to/components/kustomization.yaml",
-					"resource",
-					"configmap.yaml",
-				},
-			})
+			assert.Empty(t, logger.Warnings())
 		})
 	})
 }

@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -85,7 +86,7 @@ entries:
 				continue entries
 			}
 		}
-		logger.Warn("resource is not referenced", "path", path, "resource", e.Name())
+		return fmt.Errorf("resource is not referenced: %s", filepath.Join(path, e.Name()))
 	}
 	return nil
 }
