@@ -6,9 +6,10 @@ For example:
 
 ```
 $ check-argocd --base-dir=$(pwd) --apps=apps-of-apps,apps --components=components
-INFO 👀 checking Applications and ApplicationSets path=/path/to/apps-of-apps
-INFO 👀 checking Applications and ApplicationSets path=/path/to/apps
-INFO 👀 checking Components path=/path/to/components
+INFO 🏁 Checking Argo CD configuration base-dir=/path/to/repository
+INFO 👀 checking Applications and ApplicationSets path=apps-of-apps
+INFO 👀 checking Applications and ApplicationSets path=apps
+INFO 👀 checking Components path=components
 ```
 
 ## Building

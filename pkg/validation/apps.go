@@ -17,7 +17,7 @@ func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...s
 
 	for _, path := range apps {
 		p := filepath.Join(baseDir, path)
-		logger.Info("👀 checking Applications and ApplicationSets", "path", p)
+		logger.Info("👀 checking Applications and ApplicationSets", "path", path)
 		fsys, err := NewInMemoryFS(logger, afs, p)
 		if err != nil {
 			return err
@@ -29,8 +29,8 @@ func CheckApplications(logger Logger, afs afero.Afero, baseDir string, apps ...s
 			}
 			if info.IsDir() {
 				logger.Debug("👀 checking contents", "path", path)
-				if kp, found := lookupKustomizationFile(logger, afs, path); found {
-					if err := checkKustomizeResources(logger, afs, kp); err != nil {
+				if kpath, found := lookupKustomizationFile(logger, afs, path); found {
+					if err := checkKustomizeResources(logger, afs, baseDir, kpath); err != nil {
 						return err
 					}
 					if info.Name() != "base" {

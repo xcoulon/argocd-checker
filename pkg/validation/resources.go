@@ -12,9 +12,9 @@ import (
 // Compares the entries of `resources` in the Kustomize file with the contents in the current directory to see if
 // any local file is missing (not referenced as a resource).
 // Files starting with an underscore character (`_`) are ignored
-func checkKustomizeResources(logger Logger, afs afero.Afero, path string) error {
-	logger.Debug("checking kustomization resource", "path", path)
-	data, err := afs.ReadFile(path)
+func checkKustomizeResources(logger Logger, afs afero.Afero, basedir, kpath string) error {
+	logger.Debug("checking kustomization resource", "path", kpath)
+	data, err := afs.ReadFile(kpath)
 	if err != nil {
 		return err
 	}
@@ -24,8 +24,8 @@ func checkKustomizeResources(logger Logger, afs afero.Afero, path string) error 
 	}
 
 	// list resources
-	logger.Debug("checking kustomization resources", "dir", filepath.Dir(path))
-	entries, err := afs.ReadDir(filepath.Dir(path))
+	logger.Debug("checking kustomization resources", "dir", filepath.Dir(kpath))
+	entries, err := afs.ReadDir(filepath.Dir(kpath))
 	if err != nil {
 		return err
 	}
@@ -34,14 +34,14 @@ entries:
 		switch {
 		case e.IsDir():
 			fallthrough
-		case e.Name() == filepath.Base(path):
+		case e.Name() == filepath.Base(kpath):
 			fallthrough
 		case strings.HasPrefix(e.Name(), "_"):
 			fallthrough
 		case !(filepath.Ext(e.Name()) == ".yaml" || filepath.Ext(e.Name()) == ".yml"):
 			fallthrough
 		case filepath.Base(e.Name()) == "kustomization.yaml":
-			logger.Debug("ignoring file", "path", path)
+			logger.Debug("ignoring file", "path", kpath)
 			continue entries
 		}
 		for _, r := range kobj.Resources {
@@ -86,7 +86,9 @@ entries:
 				continue entries
 			}
 		}
-		return fmt.Errorf("resource is not referenced: %s", filepath.Join(path, e.Name()))
+		rkpath, _ := filepath.Rel(basedir, kpath)
+
+		return fmt.Errorf("resource is not referenced in %s: %s", rkpath, e.Name())
 	}
 	return nil
 }

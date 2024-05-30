@@ -9,9 +9,9 @@ import (
 	kfsys "sigs.k8s.io/kustomize/kyaml/filesys"
 )
 
-func lookupKustomizationFile(logger Logger, afs afero.Afero, basedir string) (string, bool) {
+func lookupKustomizationFile(logger Logger, afs afero.Afero, componentPath string) (string, bool) {
 	for _, k := range []string{"kustomization.yaml", "kustomization.yml", "Kustomization"} {
-		p := filepath.Join(basedir, k)
+		p := filepath.Join(componentPath, k)
 		if _, err := afs.Open(p); err == nil {
 			logger.Debug("found Kustomization file", "path", p)
 			return p, true

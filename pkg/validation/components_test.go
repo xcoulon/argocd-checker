@@ -330,7 +330,7 @@ data:
 			err = validation.CheckComponents(logger, afs, "/path/to", "components")
 
 			// then
-			require.Error(t, err, "resource is not referenced: /path/to/components/configmap2.yaml")
+			require.EqualError(t, err, "resource is not referenced in components/kustomization.yaml: configmap2.yaml")
 			assert.Empty(t, logger.Errors())
 			assert.Empty(t, logger.Warnings())
 		})
