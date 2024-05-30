@@ -1,14 +1,11 @@
 run:
-  skip-dirs:
-    - test/includes
-  skip-files:
-    - pkg/parser/parser.go # generated
   timeout: 10m
   
 linters:
   enable-all: false
   enable:
-    - megacheck
+    - gosimple
+    - staticcheck
     - govet
     - gocyclo
     - unused
@@ -19,10 +16,7 @@ linters:
     - nolintlint
   disable-all: false
   disable:
-    - maligned
     - prealloc
-    - scopelint
-    - golint
     - asasalint
   presets:
     - bugs
