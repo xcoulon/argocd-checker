@@ -2,6 +2,8 @@ package validation
 
 import (
 	iofs "io/fs"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/afero"
 	kfsys "sigs.k8s.io/kustomize/kyaml/filesys"
@@ -18,6 +20,10 @@ func NewInMemoryFS(logger Logger, afs afero.Afero, baseDir string) (kfsys.FileSy
 			if info.IsDir() {
 				logger.Debug("adding directory in fsys", "path", path)
 				return fsys.Mkdir(path)
+			}
+			if ext := strings.ToLower(filepath.Ext(path)); ext == ".md" || ext == ".adoc" {
+				logger.Debug("skipping file", "path", path)
+				return nil
 			}
 			data, err := afs.ReadFile(path)
 			if err != nil {
