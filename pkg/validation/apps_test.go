@@ -45,6 +45,7 @@ func TestCheckApplications(t *testing.T) {
 			Fs: afero.NewMemMapFs(),
 		}
 
+		// `apps` kustomization
 		err := addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1`)
 		require.NoError(t, err)
@@ -215,19 +216,22 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 			Fs: afero.NewMemMapFs(),
 		}
 
+		// `apps` kustomization
 		err := addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
-#- subfolder/. # exists, but not referenced here
+#- subfolder/.
 - appset-pasta.yaml`)
 		require.NoError(t, err)
 
+		// `apps/subfolder` kustomization (exists but not referenced in `apps`)
 		err = addFile(afs, "/path/to/apps/subfolder/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
 - app-cookie.yaml`)
 		require.NoError(t, err)
 
+		// `app-cookie` Application
 		err = addFile(afs, "/path/to/apps/subfolder/app-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -240,10 +244,12 @@ spec:
     path: components/cookie`)
 		require.NoError(t, err)
 
+		// `cookie` component kustomization
 		err = addFile(afs, "/path/to/components/cookie/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1`)
 		require.NoError(t, err)
 
+		// `appset-pasta` Application
 		err = addFile(afs, "/path/to/apps/appset-pasta.yaml", `apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -258,6 +264,7 @@ spec:
         path: components/pasta`)
 		require.NoError(t, err)
 
+		// `pasta` component kustomization
 		err = addFile(afs, "/path/to/components/pasta/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1`)
 		require.NoError(t, err)
@@ -267,6 +274,78 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 
 		// then
 		require.EqualError(t, err, "resource is not referenced in apps/kustomization.yaml: subfolder")
+		assert.Empty(t, logger.Errors())
+		assert.Empty(t, logger.Warnings())
+	})
+
+	t.Run("kustomization with skipped subfolder", func(t *testing.T) {
+		// given
+		logger := NewTestLogger(os.Stdout, charmlog.Options{
+			Level: charmlog.InfoLevel,
+		})
+
+		afs := afero.Afero{
+			Fs: afero.NewMemMapFs(),
+		}
+
+		// `apps` kustomization
+		err := addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+#- _subfolder/.
+- appset-pasta.yaml`)
+		require.NoError(t, err)
+
+		// `apps/_subfolder` kustomization  (exists but skipped since prefixed with `_`)
+		err = addFile(afs, "/path/to/apps/_subfolder/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+resources:
+- app-cookie.yaml`)
+		require.NoError(t, err)
+
+		// `app-cookie` Application
+		err = addFile(afs, "/path/to/apps/_subfolder/app-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-cookie
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: components/cookie`)
+		require.NoError(t, err)
+
+		// `cookie` component kustomization
+		err = addFile(afs, "/path/to/components/cookie/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1`)
+		require.NoError(t, err)
+
+		// `appset-pasta` ApplicationSet
+		err = addFile(afs, "/path/to/apps/appset-pasta.yaml", `apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: appset-pasta
+spec:
+  template:
+    spec:
+      destination:
+        server: https://kubernetes.default.svc
+      project: default
+      source:
+        path: components/pasta`)
+		require.NoError(t, err)
+
+		// `pasta` component kustomization
+		err = addFile(afs, "/path/to/components/pasta/kustomization.yaml", `kind: Kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1`)
+		require.NoError(t, err)
+
+		// when
+		err = validation.CheckApplications(logger, afs, "/path/to", "apps")
+
+		// then
+		require.NoError(t, err)
 		assert.Empty(t, logger.Errors())
 		assert.Empty(t, logger.Warnings())
 	})
@@ -283,12 +362,14 @@ apiVersion: kustomize.config.k8s.io/v1beta1`)
 				Fs: afero.NewMemMapFs(),
 			}
 
+			// `apps` kustomization
 			err := addFile(afs, "/path/to/apps/kustomization.yaml", `kind: Kustomization
 apiVersion: kustomize.config.k8s.io/v1beta1
 resources:
 - app-cookie.yaml`)
 			require.NoError(t, err)
 
+			// `app-cookie` Application
 			err = addFile(afs, "/path/to/apps/app-cookie.yaml", `apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

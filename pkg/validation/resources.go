@@ -33,16 +33,19 @@ entries:
 	for _, e := range entries {
 		name := e.Name()
 		switch {
+		case strings.HasPrefix(name, "_"):
+			logger.Debug("ignoring file or dir prefix with underscore", "path", kpath)
+			continue entries
 		case e.IsDir():
 			break
 		case name == filepath.Base(kpath):
-			fallthrough
-		case strings.HasPrefix(name, "_"):
-			fallthrough
+			logger.Debug("ignoring base directory", "path", kpath)
+			continue entries
 		case !(filepath.Ext(name) == ".yaml" || filepath.Ext(name) == ".yml"):
-			fallthrough
+			logger.Debug("ignoring non-YAML file", "path", kpath)
+			continue entries
 		case filepath.Base(name) == "kustomization.yaml":
-			logger.Debug("ignoring file", "path", kpath)
+			logger.Debug("ignoring kustomization file", "path", kpath)
 			continue entries
 		}
 		for _, r := range kobj.Resources {
