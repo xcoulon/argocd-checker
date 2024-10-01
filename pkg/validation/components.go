@@ -13,7 +13,7 @@ func CheckComponents(logger Logger, afs afero.Afero, baseDir string, components 
 
 	for _, path := range components {
 		p := filepath.Join(baseDir, path)
-		logger.Info("👀 checking Components", "path", path)
+		logger.Info("👀 checking components", "path", path)
 		fsys, err := NewInMemoryFS(logger, afs, p)
 		if err != nil {
 			return err

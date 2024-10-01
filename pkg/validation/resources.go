@@ -31,31 +31,32 @@ func checkKustomizeResources(logger Logger, afs afero.Afero, basedir, kpath stri
 	}
 entries:
 	for _, e := range entries {
+		name := e.Name()
 		switch {
 		case e.IsDir():
+			break
+		case name == filepath.Base(kpath):
 			fallthrough
-		case e.Name() == filepath.Base(kpath):
+		case strings.HasPrefix(name, "_"):
 			fallthrough
-		case strings.HasPrefix(e.Name(), "_"):
+		case !(filepath.Ext(name) == ".yaml" || filepath.Ext(name) == ".yml"):
 			fallthrough
-		case !(filepath.Ext(e.Name()) == ".yaml" || filepath.Ext(e.Name()) == ".yml"):
-			fallthrough
-		case filepath.Base(e.Name()) == "kustomization.yaml":
+		case filepath.Base(name) == "kustomization.yaml":
 			logger.Debug("ignoring file", "path", kpath)
 			continue entries
 		}
 		for _, r := range kobj.Resources {
-			if r == e.Name() {
+			if filepath.Clean(r) == name {
 				continue entries
 			}
 		}
 		for _, sg := range kobj.ConfigMapGenerator {
 			for _, f := range sg.FileSources {
 				if i := strings.LastIndex(f, "="); i > 0 {
-					if f[i+1:] == e.Name() {
+					if f[i+1:] == name {
 						continue entries
 					}
-				} else if f == e.Name() {
+				} else if f == name {
 					continue entries
 				}
 			}
@@ -63,32 +64,32 @@ entries:
 		for _, sg := range kobj.SecretGenerator {
 			for _, f := range sg.FileSources {
 				if i := strings.LastIndex(f, "="); i > 0 {
-					if f[i+1:] == e.Name() {
+					if f[i+1:] == name {
 						continue entries
 					}
-				} else if f == e.Name() {
+				} else if f == name {
 					continue entries
 				}
 			}
 		}
 		for _, m := range kobj.PatchesStrategicMerge { //nolint:staticcheck
-			if string(m) == e.Name() {
+			if string(m) == name {
 				continue entries
 			}
 		}
 		for _, m := range kobj.Patches {
-			if string(m.Path) == e.Name() {
+			if string(m.Path) == name {
 				continue entries
 			}
 		}
 		for _, m := range kobj.Transformers {
-			if string(m) == e.Name() {
+			if string(m) == name {
 				continue entries
 			}
 		}
 		rkpath, _ := filepath.Rel(basedir, kpath)
 
-		return fmt.Errorf("resource is not referenced in %s: %s", rkpath, e.Name())
+		return fmt.Errorf("resource is not referenced in %s: %s", rkpath, name)
 	}
 	return nil
 }
