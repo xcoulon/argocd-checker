@@ -1,3 +1,5 @@
+NOTE: code has been migrated to https://github.com/codeready-toolchain/sandboxctl
+
 # Argo CD Checker
 
 A tiny tool that verifies that the Application and ApplicationSet resources have a valid destination path, and that `kustomize build` runs successfully in the application and component folders.
